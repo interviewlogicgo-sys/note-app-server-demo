@@ -17,12 +17,25 @@ jobs:
         shell: powershell
         run: |
           docker stop node-app 2>$null
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Container not running"
+          }
+
           docker rm node-app 2>$null
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Container does not exist"
+          }
 
       - name: Remove old image
         shell: powershell
         run: |
           docker rmi node-app-image 2>$null
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Image does not exist"
+          }
 
       - name: Build Docker image
         shell: powershell
