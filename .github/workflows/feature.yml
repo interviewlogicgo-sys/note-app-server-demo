@@ -1,0 +1,47 @@
+name: Staging Deploy
+
+on:
+  push:
+    branches:
+      - feature
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Staging
+        shell: powershell
+        run: |
+          Write-Host "Deploying STAGING..."
+
+          # Stop old container
+          $container = docker ps -a --format "{{.Names}}" | Select-String "^node-app-stage$"
+
+          if ($container) {
+            docker stop node-app-stage
+            docker rm node-app-stage
+          }
+
+          # Remove old image
+          $image = docker images --format "{{.Repository}}" | Select-String "^node-app-stage-image$"
+
+          if ($image) {
+            docker rmi node-app-stage-image
+          }
+
+          # Build image
+          docker build -t node-app-stage-image .
+
+          # Run container
+          docker run -d `
+            --name node-app-stage `
+            -p 5001:5000 `
+            node-app-stage-image
+
+      - name: Show running containers
+        shell: powershell
+        run: docker ps
