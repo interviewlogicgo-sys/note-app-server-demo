@@ -16,25 +16,26 @@ jobs:
       - name: Stop old container
         shell: powershell
         run: |
-          docker stop node-app 2>$null
+          $container = docker ps -a --format "{{.Names}}" | Select-String "^node-app$"
 
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Container not running"
+          if ($container) {
+            docker stop node-app
+            docker rm node-app
           }
-
-          docker rm node-app 2>$null
-
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Container does not exist"
+          else {
+            Write-Host "Container node-app does not exist"
           }
 
       - name: Remove old image
         shell: powershell
         run: |
-          docker rmi node-app-image 2>$null
+          $image = docker images --format "{{.Repository}}" | Select-String "^node-app-image$"
 
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Image does not exist"
+          if ($image) {
+            docker rmi node-app-image
+          }
+          else {
+            Write-Host "Image node-app-image does not exist"
           }
 
       - name: Build Docker image
