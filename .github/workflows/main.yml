@@ -1,0 +1,47 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Production
+        shell: powershell
+        run: |
+          Write-Host "Deploying PRODUCTION..."
+
+          # Stop old container
+          $container = docker ps -a --format "{{.Names}}" | Select-String "^node-app-prod$"
+
+          if ($container) {
+            docker stop node-app-prod
+            docker rm node-app-prod
+          }
+
+          # Remove old image
+          $image = docker images --format "{{.Repository}}" | Select-String "^node-app-prod-image$"
+
+          if ($image) {
+            docker rmi node-app-prod-image
+          }
+
+          # Build image
+          docker build -t node-app-prod-image .
+
+          # Run container
+          docker run -d `
+            --name node-app-prod `
+            -p 5000:5000 `
+            node-app-prod-image
+
+      - name: Show running containers
+        shell: powershell
+        run: docker ps
