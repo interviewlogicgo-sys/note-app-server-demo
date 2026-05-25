@@ -1,0 +1,42 @@
+name: Local Docker Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Stop old container
+        shell: powershell
+        run: |
+          docker stop node-app 2>$null
+          docker rm node-app 2>$null
+
+      - name: Remove old image
+        shell: powershell
+        run: |
+          docker rmi node-app-image 2>$null
+
+      - name: Build Docker image
+        shell: powershell
+        run: |
+          docker build -t node-app-image .
+
+      - name: Run Docker container
+        shell: powershell
+        run: |
+          docker run -d `
+            --name node-app `
+            -p 5000:5000 `
+            node-app-image
+
+      - name: Show running containers
+        shell: powershell
+        run: docker ps
